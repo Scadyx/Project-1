@@ -1,0 +1,7 @@
+psycopg2-binary
+fastapi
+uvicorn
+asyncio
+statistics
+httpx
+kafka-python
