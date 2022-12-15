@@ -20,6 +20,14 @@ services:
     restart: always
     ports:
       - '8001:8001'
+  consumer:
+    build: ./consumer
+    restart: always
+    environment:
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - kafka
+
 
 
   zookeeper:
@@ -30,6 +38,7 @@ services:
         ZOOKEEPER_TICK_TIME: 2000
 
   kafka:
+    container_name: kafka
     image: wurstmeister/kafka:latest
     depends_on:
       - zookeeper

@@ -3,6 +3,7 @@ import db_connect_events
 import uvicorn
 from fastapi import FastAPI
 from kafka import KafkaProducer
+import asyncio
 
 producer = KafkaProducer(bootstrap_servers=['kafka:9092'], value_serializer=lambda x: json.dumps(x).encode('utf-8'))
 
@@ -26,8 +27,7 @@ def events_create():
 
 events_create()
 
-@app.get("/events")
-def get_events():
+async def get_events():
     query = "SELECT * FROM events"
     try:
         db_connect_events.cursor.execute(query)
@@ -36,8 +36,7 @@ def get_events():
         return "Cannot get all events"
 
 
-@app.get("/event")
-def get_events(id):
+async def get_event(id):
     query = 'SELECT * FROM events WHERE id = {}'.format(id)
     try:
         db_connect_events.cursor.execute(query)
@@ -46,8 +45,7 @@ def get_events(id):
         return "Cannot fetch user with id"
 
 
-@app.delete("/event")
-def delete_events(id):
+async def delete_event(id):
     query = "DELETE FROM events WHERE id = {}".format(id)
     try:
         db_connect_events.cursor.execute(query)
@@ -55,28 +53,47 @@ def delete_events(id):
     except:
         return "Cannot delete user with id"
 
-@app.put("/event")
-def update_events(id, val):
-    res = dict(zip(id.split(), val.split()))
-    # res = json.dumps(res, default=lambda o: '2')
-    producer.send('events.taxonomy', res)
-    producer.flush()
-    return res
-
-    # except:
-    #     return "Cannot update event with id"
-
-@app.post("/event")
-def create_events(col, val):
+async def update_event(col, val):
     try:
         res = dict(zip(col.split(), val.split()))
-        # res2 = json.dumps(res, default=lambda o: '2')
-        producer.send('events.taxonomy', res)
+        producer.send('events.taxonomy', dict(update=res))
+        producer.flush()
+        return res
+    except:
+        return "Cannot delete bet with id"
+
+
+async def create_event(col, val):
+    try:
+        res = dict(zip(col.split(), val.split()))
+        producer.send('events.taxonomy', dict(create=res))
         producer.flush()
         return res
     except:
          return "Something went wrong when creating new event"
 
+@app.get("/events")
+async def get_events_route():
+    return await get_events()
+
+@app.get("/event")
+async def get_event_route(id):
+    return await get_event(id)
+
+@app.delete("/event")
+async def delete_event_route(id):
+    return await delete_event(id)
+
+@app.put("/event")
+async def update_event_route(col, val):
+    return await update_event(col, val)
+
+@app.post("/event")
+async def create_event_route(col, val):
+    return await create_event(col, val)
+
 
 if __name__ == '__main__':
     uvicorn.run(app, host="0.0.0.0", port=8001)
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(app)
