@@ -17,7 +17,7 @@ def events_create():
         team_1 varchar(255),
         team_2 varchar(255),
         event_date varchar(255),
-        score int2,
+        score varchar(50),
         state varchar(50)
         CONSTRAINT check_state
         CHECK(state IN('created', 'active', 'finished'))); '''
@@ -55,6 +55,7 @@ async def delete_event(id):
 
 async def update_event(col, val):
     try:
+
         res = dict(zip(col.split(), val.split()))
         producer.send('events.taxonomy', dict(update=res))
         producer.flush()

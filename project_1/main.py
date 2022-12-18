@@ -1,4 +1,4 @@
-import psycopg2
+
 import json
 from fastapi import FastAPI
 import uvicorn
@@ -20,7 +20,7 @@ def init_db(file_path: str):
                    ;'''
 
 
-    sql_insert = 'INSERT INTO users ({}) VALUES ({})'
+    sql_insert = 'INSERT INTO users ({}) VALUES ({}) ON CONFLICT DO NOTHING'
     db_connect.cursor.execute(sql_users)
     with open(file_path, 'r') as f:
         data = list(map(json.loads, f))
@@ -96,12 +96,12 @@ def update_user(id, val):
 
 @app.post("/user")
 def create_user(col, val):
-    query = "INSERT INTO users ({}) VALUES  ({}) ".format(col, val)
-    try:
-        db_connect.cursor.execute(query)
-        return "created user {}".format(val)
-    except:
-        return "Something went wrong when creating new user"
+    query = "INSERT INTO users ({}) VALUES ({})".format(col, val)
+    # try:
+    db_connect.cursor.execute(query)
+    return "created user {}".format(val)
+    # except:
+    #     return "Something went wrong when creating new user"
 
 
 @app.get("/bets")
@@ -138,6 +138,9 @@ def delete_bet(id):
 def update_bet(id, val):
     query = "UPDATE bets SET {} WHERE id = {}".format(val, id)
     try:
+        check = ['market', 'state']
+        if val in check:
+            raise Exception('You can not modify market or state')
         db_connect.cursor.execute(query)
         return "updated {} in bet with id {}".format(val, id)
     except:

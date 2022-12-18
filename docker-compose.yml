@@ -21,12 +21,27 @@ services:
     ports:
       - '8001:8001'
   consumer:
-    build: ./consumer
+    build: consumer_event
     restart: always
     environment:
       - PYTHONUNBUFFERED=1
     depends_on:
       - kafka
+  consumer2:
+    build: consumer_bets
+    restart: always
+    environment:
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - kafka
+  consumer3:
+    build: ./consumer_bets_writer
+    restart: always
+    environment:
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - kafka
+
 
 
 

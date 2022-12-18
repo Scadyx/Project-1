@@ -7,22 +7,28 @@ from kafka import KafkaConsumer
 Event_Writer = KafkaConsumer(bootstrap_servers=['kafka:9092'],
                              auto_offset_reset='earliest',
                              enable_auto_commit=True,
-                             group_id='my-group',
+                             group_id='event',
                              value_deserializer=lambda x: loads(x.decode('utf-8')))
 Event_Writer.subscribe(topics=['events.taxonomy'])
 
-sql_insert = 'INSERT INTO Events ({}) VALUES ({});'
 for msg in Event_Writer:
-    d = msg.value.values()
-    res = dict(*d)
-    # print(*res)
-    # print(msg.value)
+    unp = dict(*msg.value.values())
+    col = ','.join(unp.keys())
+    val = ','.join(unp.values())
     if 'create' in msg.value:
-        db.cursor.execute(sql_insert.format(*res.keys(), *res.values()))
+        db.cursor.execute(f'INSERT INTO Events ({col}) VALUES ({val});')
     elif 'update' in msg.value:
-        print('updated')
+        dt = []
+        for key, value in unp.items():
+            if key not in 'id':
+                dt.append(f"{key} = {value}")
+        gen = (','.join(dt))
+        print(gen)
+        db.cursor.execute(f'UPDATE Events SET {gen} WHERE id = {unp["id"]}')
+
     else:
         print('gg')
+
 
 
 
